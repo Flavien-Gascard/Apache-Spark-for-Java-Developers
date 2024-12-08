@@ -74,23 +74,20 @@ public class Main {
         JavaRDD<Double> myRdd = sc.parallelize(inputData);
 
         /*
-         * Code Overview
+         * Reduce Overview
          * The code computes the sum of all elements in the myRdd using the reduce
          * action and then prints the result to the console.
-         * 
          * 1. The reduce Action
-         * java
-         * Copy code
+
          * Double result = myRdd.reduce((value1, value2) -> value1 + value2);
+         * 
          * Purpose: The reduce method is an action in Apache Spark that aggregates all
          * elements in the RDD using a binary function. It processes the elements in
          * parallel across partitions and combines the results progressively until a
          * single output value is produced.
+         * 
          * Key Components
          * Method:
-         * 
-         * java
-         * Copy code
          * T reduce(Function2<T, T, T> func);
          * Function2<T, T, T>: Represents a binary function that takes two input values
          * of type T and produces a single output of type T.
@@ -98,92 +95,60 @@ public class Main {
          * T = Double
          * The function (value1, value2) -> value1 + value2 sums two input Double
          * values.
+
          * Execution:
-         * 
          * Spark applies the binary function in a tree-like manner:
          * Elements within each partition are reduced first.
          * The intermediate results from all partitions are combined to produce the
          * final result.
-         * Parallelism:
          * 
+         * Parallelism:
          * The operation leverages Spark's distributed nature:
          * Each partition reduces its data independently.
          * Results are merged efficiently across partitions to avoid bottlenecks.
+         * 
          * Flow of Execution
          * Assuming myRdd contains the values [1.0, 2.0, 3.0, 4.0] and has 2 partitions:
-         * 
          * Step 1 - Partition Level Reduction:
          * Spark first computes the sums within each partition:
-         * 
          * Partition 1: [1.0, 2.0] → 1.0 + 2.0 = 3.0
          * Partition 2: [3.0, 4.0] → 3.0 + 4.0 = 7.0
          * Step 2 - Combining Results:
          * Spark combines the intermediate results from all partitions:
-         * 
          * 3.0 + 7.0 = 10.0
          * Step 3 - Result:
          * The final result (10.0) is returned.
-         * 
-         * 2. Printing the Result
-         * java
-         * Copy code
-         * System.out.println("Reduce (Totals function) of myRdd is : " + result);
-         * Purpose: Outputs the result of the reduce action to the console.
-         * If the input RDD contained [1.0, 2.0, 3.0, 4.0], the output would be:
-         * vbnet
-         * Copy code
-         * Reduce (Totals function) of myRdd is : 10.0
+
          * Key Notes on the reduce Method
          * Associativity:
          * The binary function used in reduce must be associative. This means:
-         * 
-         * (
-         * 𝑎
-         * +
-         * 𝑏
-         * )
-         * +
-         * 𝑐
-         * =
-         * 𝑎
-         * +
-         * (
-         * 𝑏
-         * +
-         * 𝑐
-         * )
          * (a+b)+c=a+(b+c)
          * Associativity ensures that the computation can be split and performed in
          * parallel safely.
+         * 
          * Commutativity:
          * The function should ideally also be commutative (order of operations does not
          * matter):
-         * 
-         * 𝑎
-         * +
-         * 𝑏
-         * =
-         * 𝑏
-         * +
-         * 𝑎
          * a+b=b+a
          * While reduce works without commutativity, it's generally safer for parallel
          * operations to use a commutative function.
+        
          * Non-Partitioned Operations:
-         * 
          * reduce operates across all partitions, but the final aggregation happens on
          * the driver node because it returns a single value.
          * Optimization:
-         * 
          * Spark's reduce is optimized to avoid unnecessary shuffles by performing
          * computations locally within partitions first.
+         * 
          * Summary
          * What Happens?
          * The reduce method aggregates all elements in the RDD using the binary
          * function (value1, value2) -> value1 + value2.
+         * 
          * Why Use It?
          * It efficiently computes a single aggregated result (e.g., sum, max, or any
          * custom reduction) in a distributed manner.
+         * 
          * How Does It Work?
          * The binary function is applied locally within partitions, and the
          * intermediate results are progressively merged until the final result is
