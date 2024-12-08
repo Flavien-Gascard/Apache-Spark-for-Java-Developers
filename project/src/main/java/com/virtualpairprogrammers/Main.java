@@ -12,11 +12,11 @@ import org.apache.spark.api.java.JavaSparkContext;
 public class Main {
     public static void main(String[] args) {
         // Test Data
-        List<Double> inputData = new ArrayList<>();
-        inputData.add(35.5);
-        inputData.add(12.49943);
-        inputData.add(90.32);
-        inputData.add(20.32);
+        List<Integer> inputData = new ArrayList<>();
+        inputData.add(35);
+        inputData.add(12);
+        inputData.add(90);
+        inputData.add(20);
         /*
          * The Following line configures the logging level for all logs coming from
          * org.apache.
@@ -71,14 +71,13 @@ public class Main {
          * It is immutable and distributed. Spark operates on RDDs using transformations
          * (e.g., map, filter) and actions (e.g., collect, reduce).
          */
-        JavaRDD<Double> myRdd = sc.parallelize(inputData);
-
+        JavaRDD<Integer> myRdd = sc.parallelize(inputData);
         /*
          * Reduce Overview
          * The code computes the sum of all elements in the myRdd using the reduce
          * action and then prints the result to the console.
          * 1. The reduce Action
-
+         * 
          * Double result = myRdd.reduce((value1, value2) -> value1 + value2);
          * 
          * Purpose: The reduce method is an action in Apache Spark that aggregates all
@@ -95,7 +94,7 @@ public class Main {
          * T = Double
          * The function (value1, value2) -> value1 + value2 sums two input Double
          * values.
-
+         * 
          * Execution:
          * Spark applies the binary function in a tree-like manner:
          * Elements within each partition are reduced first.
@@ -118,7 +117,7 @@ public class Main {
          * 3.0 + 7.0 = 10.0
          * Step 3 - Result:
          * The final result (10.0) is returned.
-
+         * 
          * Key Notes on the reduce Method
          * Associativity:
          * The binary function used in reduce must be associative. This means:
@@ -132,7 +131,7 @@ public class Main {
          * a+b=b+a
          * While reduce works without commutativity, it's generally safer for parallel
          * operations to use a commutative function.
-        
+         * 
          * Non-Partitioned Operations:
          * reduce operates across all partitions, but the final aggregation happens on
          * the driver node because it returns a single value.
@@ -154,8 +153,123 @@ public class Main {
          * intermediate results are progressively merged until the final result is
          * obtained.
          */
-        Double result = myRdd.reduce((value1, value2) -> value1 + value2);
-        System.out.println("Reduce (Totals function) of myRdd is : " + result);
+        Integer result = myRdd.reduce((value1, value2) -> value1 + value2);
+        System.out.println("Reduce (Totals funcIntegertion) of myRdd is : " + result);
+
+        /*
+         * This code takes an existing RDD (myRdd), applies the square root function
+         * (Math.sqrt) to each element using map (a transformation), and then prints
+         * each result using foreach (an action).
+         * 
+         * 1. map Transformation
+         * JavaRDD<Double> sqrtRdd1 = myRdd.map(value -> Math.sqrt(value));
+         * Purpose
+         * The map transformation applies a given function to each element in the RDD
+         * and produces a new RDD containing the transformed elements.
+         * Components
+         * map Method:
+         * JavaRDD<U> map(Function<T, U> f);
+         * Input: A function f that transforms elements of type T into type U.
+         * Output: A new RDD containing the transformed elements.
+         * In this case:
+         * T = Double (input RDD type)
+         * U = Double (output RDD type)
+         * Transformation function: value -> Math.sqrt(value) computes the square root
+         * of each input value.
+         * Execution:
+         * Spark processes the map transformation in a lazy manner, meaning it does not
+         * execute immediately.
+         * The transformation is only triggered when an action (e.g., foreach) is
+         * called.
+         * Example Input and Output: If myRdd contains [1.0, 4.0, 9.0, 16.0], then:
+         * The map transformation applies Math.sqrt:
+         * 1.0
+         * =
+         * 1.0
+         * 1.0
+         * ​
+         * =1.0
+         * 4.0
+         * =
+         * 2.0
+         * 4.0
+         * ​
+         * =2.0
+         * 9.0
+         * =
+         * 3.0
+         * 9.0
+         * ​
+         * =3.0
+         * 16.0
+         * =
+         * 4.0
+         * 16.0
+         * ​
+         * =4.0
+         * Resulting RDD (sqrtRdd1) contains [1.0, 2.0, 3.0, 4.0].
+         * 2. foreach Action
+         * sqrtRdd1.foreach(value -> System.out.println(value));
+         * Purpose
+         * The foreach method is an action that applies a specified function to each
+         * element in the RDD.
+         * In this case, it prints each value to the console.
+         * Components
+         * foreach Method:
+         * void foreach(VoidFunction<T> f);
+         * Input: A function f that performs some operation on each element of type T.
+         * Output: Nothing is returned (void).
+         * Here, the function is value -> System.out.println(value).
+         * Execution:
+         * foreach triggers the execution of all preceding transformations (map in this
+         * case).
+         * Spark applies the function (System.out.println) to each element in the RDD in
+         * parallel across the available partitions.
+         * Parallel Execution:
+         * Each partition executes the System.out.println function independently on its
+         * data.
+         * In local mode (local[*]), this parallel execution happens across available
+         * CPU threads.
+         * Key Points
+         * Lazy Evaluation:   
+         * Transformations like map are not executed immediately. Spark builds a DAG
+         * (Directed Acyclic Graph) of transformations.
+         * The foreach action triggers execution.
+         * RDD Immutability:
+         * myRdd remains unchanged. The map transformation creates a new RDD (sqrtRdd1).
+         * Distributed Execution:
+         * Both map and foreach operate in parallel across partitions:
+         * map transforms the data within each partition.
+         * foreach executes the print operation in parallel for all partitions.
+         * Execution Flow
+         * Assuming myRdd contains [1.0, 4.0, 9.0, 16.0], the execution flow is as
+         * follows:
+         * Step 1 - map Transformation:
+         * Input RDD: [1.0, 4.0, 9.0, 16.0]
+         * Transformation (Math.sqrt): Computes the square root of each value.
+         * Resulting RDD (sqrtRdd1): [1.0, 2.0, 3.0, 4.0]
+         * Step 2 - foreach Action:
+         * Triggering execution.
+         * Applies System.out.println to each value in sqrtRdd1.
+         * Console output:
+         * 1.0
+         * 2.0
+         * 3.0
+         * 4.0
+         * Final Summary
+         * map: A transformation that applies Math.sqrt to each element and produces a
+         * new RDD (sqrtRdd1).
+         * foreach: An action that triggers execution and prints each element in the RDD
+         * to the console.
+         * The code demonstrates how Spark processes transformations lazily and executes
+         * actions in a distributed, parallelized manner.
+         */
+        JavaRDD<Double> sqrtRdd = myRdd.map(value -> Math.sqrt(value));
+        sqrtRdd.foreach(value -> System.out.println(value));
+        // or
+        // JavaRDD<Double> sqrtRdd2 = myRdd.map(value -> Math.sqrt(value));
+        // sqrtRdd2.foreach(System.out::println);
+
         /*
          * Purpose: Terminates the JavaSparkContext and releases the resources
          * associated with it.
